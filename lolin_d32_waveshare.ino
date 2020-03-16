@@ -30,7 +30,7 @@ void loop() {
   delay(4000);
 }
 
-const char HelloWorld[] = "hello rand ";
+const char HelloWorld[] = "random n ";
 
 void helloWorld() {
   display.setRotation(1);
@@ -52,10 +52,30 @@ void helloWorld() {
 
   do {
     display.fillScreen(GxEPD_WHITE);
+    display.setCursor(72, 18);
+    display.print(getVoltageAndPercentage());
     display.setCursor(x, y);
     display.print(HelloWorld);
     display.setCursor(x + tbw + 10, y);
     display.print(randomString);
   } while (display.nextPage());
 
+}
+
+String getVoltageAndPercentage() {
+  float voltage = analogRead(35) / 4096.0 * 7.23;
+  uint8_t percentage = percentageFromVoltage(voltage);
+
+  return String(voltage)+"V " + String(percentage)+"%";
+}
+
+uint8_t percentageFromVoltage(float voltage) {
+  // LOLIN D32 (no voltage divider need already fitted to board.
+  // or NODEMCU ESP32 with 100K+100K voltage divider
+  uint8_t percentage;
+  percentage = 2808.3808 * pow(voltage, 4) - 43560.9157 * pow(voltage, 3) + 252848.5888 * pow(voltage, 2) - 650767.4615 * voltage + 626532.5703;
+  if (voltage > 4.19) percentage = 100;
+  else if (voltage <= 3.50) percentage = 0;
+
+  return percentage;
 }
