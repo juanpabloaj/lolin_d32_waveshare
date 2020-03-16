@@ -33,6 +33,7 @@ void loop() {
 const char HelloWorld[] = "random n ";
 
 void helloWorld() {
+  display.setPartialWindow(0, 0, display.width(), display.height());
   display.setRotation(1);
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
@@ -47,9 +48,7 @@ void helloWorld() {
 
   String randomString = String(random(1, 60));
 
-  display.setFullWindow();
   display.firstPage();
-
   do {
     display.fillScreen(GxEPD_WHITE);
     display.setCursor(72, 18);
