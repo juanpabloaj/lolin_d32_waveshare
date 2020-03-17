@@ -14,23 +14,27 @@
 
 GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT> display(GxEPD2_154(/*CS=5*/ SS, /*DC=*/ 17, /*RST=*/ 16, /*BUSY=*/ 4));
 
+RTC_DATA_ATTR int wakeUpCounter = 0;
 
 void setup() {
+  unsigned long startTime = millis();
+
   Serial.begin(115200);
   Serial.println();
   Serial.println("setup");
   delay(100);
   display.init(115200);
-}
 
-void loop() {
   helloWorld();
   delay(1000);
 
-  delay(4000);
+  long sleepTimer = getSleepTimer();
+  messageBeforeSleep(startTime, sleepTimer);
+  display.hibernate();
+  beginSleep(sleepTimer);
 }
 
-const char HelloWorld[] = "random n ";
+void loop() {}
 
 void helloWorld() {
   display.setPartialWindow(0, 0, display.width(), display.height());
@@ -38,27 +42,55 @@ void helloWorld() {
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
   
+  String randomString = "rand: "+ String(random(1, 60));
+
   int16_t tbx, tby;
   uint16_t tbw, tbh;
 
-  display.getTextBounds(HelloWorld, 0, 0, &tbx, &tby, &tbw, &tbh);
+  display.getTextBounds(randomString, 0, 0, &tbx, &tby, &tbw, &tbh);
 
   uint16_t x = ((display.width() - tbw) / 2) - tbx;
   uint16_t y = ((display.height() - tbh) / 2) - tby;
 
-  String randomString = String(random(1, 60));
+  display.firstPage();
+  do {
+    display.fillRect(0, 0, display.width(), display.height()/2, GxEPD_WHITE);
+    display.setCursor(72, 18);
+    display.print(getVoltageAndPercentage());
+    display.setCursor(0, 50);
+    display.println(randomString);
+    display.println("wake up counter " + String(wakeUpCounter++));
+  } while (display.nextPage());
+
+}
+
+void messageBeforeSleep(unsigned long startTime, long sleepTimer) {
+  String awake = "awake for " + String((millis() - startTime) / 1000., 3) + " secs";
+  String entering = "deep-sleep for " + String(sleepTimer) + " secs";
+
+  display.setPartialWindow(0, display.height() / 2, display.width(), display.height());
 
   display.firstPage();
   do {
-    display.fillScreen(GxEPD_WHITE);
-    display.setCursor(72, 18);
-    display.print(getVoltageAndPercentage());
-    display.setCursor(x, y);
-    display.print(HelloWorld);
-    display.setCursor(x + tbw + 10, y);
-    display.print(randomString);
+    display.fillRect(0, display.height() / 2, display.width(), display.height(), GxEPD_WHITE);
+    display.setCursor(0, 120);
+    display.println(awake);
+    display.println(entering);
   } while (display.nextPage());
+}
 
+long getSleepTimer() {
+  long sleepDurationMinutes = 1;
+  int currentHour = 0, currentMin = 0, currentSec = 0;
+  return (sleepDurationMinutes * 60 - ((currentMin % sleepDurationMinutes) * 60 + currentSec)) + 5;
+}
+
+void beginSleep(long sleepTimer) {
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF);
+
+  esp_sleep_enable_timer_wakeup(sleepTimer * 1000000LL);
+
+  esp_deep_sleep_start();
 }
 
 String getVoltageAndPercentage() {
