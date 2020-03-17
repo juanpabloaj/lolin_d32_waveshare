@@ -41,16 +41,9 @@ void helloWorld() {
   display.setRotation(1);
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
-  
-  String randomString = "rand: "+ String(random(1, 60));
 
-  int16_t tbx, tby;
-  uint16_t tbw, tbh;
-
-  display.getTextBounds(randomString, 0, 0, &tbx, &tby, &tbw, &tbh);
-
-  uint16_t x = ((display.width() - tbw) / 2) - tbx;
-  uint16_t y = ((display.height() - tbh) / 2) - tby;
+  time_t now;
+  time(&now);
 
   display.firstPage();
   do {
@@ -58,23 +51,22 @@ void helloWorld() {
     display.setCursor(72, 18);
     display.print(getVoltageAndPercentage());
     display.setCursor(0, 50);
-    display.println(randomString);
-    display.println("wake up counter " + String(wakeUpCounter++));
+    display.println("wake up count " + String(wakeUpCounter++));
+    display.println("now " + String(now));
   } while (display.nextPage());
 
 }
 
 void messageBeforeSleep(unsigned long startTime, long sleepTimer) {
   String awake = "awake for " + String((millis() - startTime) / 1000., 3) + " secs";
-  String entering = "deep-sleep for " + String(sleepTimer) + " secs";
+  String entering = awake + ", deep-sleep for " + String(sleepTimer) + " secs";
 
   display.setPartialWindow(0, display.height() / 2, display.width(), display.height());
 
   display.firstPage();
   do {
     display.fillRect(0, display.height() / 2, display.width(), display.height(), GxEPD_WHITE);
-    display.setCursor(0, 120);
-    display.println(awake);
+    display.setCursor(0, 140);
     display.println(entering);
   } while (display.nextPage());
 }
