@@ -23,7 +23,7 @@ void setup() {
   Serial.println();
   Serial.println("setup");
   delay(100);
-  display.init(115200);
+  display.init(115200, false);
 
   helloWorld();
   delay(1000);
