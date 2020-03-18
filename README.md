@@ -1,9 +1,11 @@
 # lolin_d32_waveshare
 
-Create a `configuration.h` file with your WIFI user and password.
+Create a `configuration.h` file with your WIFI credentials and timezone offset
 
     const char *ssid = "ssid";
     const char *password = "password";
+    const long GmtOffsetSec = -3 * 3600;
+    const int DaylightOffsetSec = 0;
 
 ## Libraries
 

@@ -51,7 +51,13 @@ void helloWorld() {
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
 
+  time_t now;
   struct tm timeinfo;
+
+  time(&now);
+  localtime_r(&now, &timeinfo);
+  timeinfo.tm_sec += GmtOffsetSec + DaylightOffsetSec;
+  mktime(&timeinfo);
 
   display.firstPage();
   do {
@@ -61,9 +67,7 @@ void helloWorld() {
     display.setCursor(0, 50);
     display.println("wake up count " + String(wakeUpCounter++));
 
-    if (getLocalTime(&timeinfo)) {
-      display.println(&timeinfo, "%a %d %b %H:%M");
-    }
+    display.println(&timeinfo, "%a %d %b %H:%M");
   } while (display.nextPage());
 
 }
@@ -115,9 +119,6 @@ uint8_t percentageFromVoltage(float voltage) {
 }
 
 void initAndGetTime() {
-  const char* ntpServer = "pool.ntp.org";
-  const long gmtOffsetSec = -3 * 3600;
-  const int daylightOffsetSec = 0;
 
   Serial.printf("Connecting to %s ", ssid);
   WiFi.begin(ssid, password);
@@ -129,11 +130,12 @@ void initAndGetTime() {
 
   struct tm timeinfo;
 
-  configTime(gmtOffsetSec, daylightOffsetSec, "pool.ntp.org", "time.nist.gov");
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
   if (!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
   }
+  Serial.println(&timeinfo, "%a %d %b %H:%M");
 
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
