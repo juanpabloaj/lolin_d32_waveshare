@@ -1,5 +1,9 @@
 # lolin_d32_waveshare
 
+Create a `configuration.h` file with your WIFI user and password.
+
+    const char *ssid = "ssid";
+    const char *password = "password";
 
 ## Libraries
 

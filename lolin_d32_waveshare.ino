@@ -7,10 +7,15 @@
 // DIN -> MOSI(23)
 // GND -> GND, 3.3V -> 3.3V
 
+#include <WiFi.h>
+#include "time.h"
+
 #define ENABLE_GxEPD2_GFX 0
 
 #include <GxEPD2_BW.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
+
+#include "configuration.h"
 
 GxEPD2_BW<GxEPD2_154, GxEPD2_154::HEIGHT> display(GxEPD2_154(/*CS=5*/ SS, /*DC=*/ 17, /*RST=*/ 16, /*BUSY=*/ 4));
 
@@ -24,6 +29,10 @@ void setup() {
   Serial.println("setup");
   delay(100);
   display.init(115200, false);
+
+  if (wakeUpCounter ==  0) {
+    initAndGetTime();
+  }
 
   helloWorld();
   delay(1000);
@@ -42,17 +51,19 @@ void helloWorld() {
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
 
-  time_t now;
-  time(&now);
+  struct tm timeinfo;
 
   display.firstPage();
   do {
     display.fillRect(0, 0, display.width(), display.height()/2, GxEPD_WHITE);
-    display.setCursor(72, 18);
+    display.setCursor(80, 18);
     display.print(getVoltageAndPercentage());
     display.setCursor(0, 50);
     display.println("wake up count " + String(wakeUpCounter++));
-    display.println("now " + String(now));
+
+    if (getLocalTime(&timeinfo)) {
+      display.println(&timeinfo, "%a %d %b %H:%M");
+    }
   } while (display.nextPage());
 
 }
@@ -101,4 +112,29 @@ uint8_t percentageFromVoltage(float voltage) {
   else if (voltage <= 3.50) percentage = 0;
 
   return percentage;
+}
+
+void initAndGetTime() {
+  const char* ntpServer = "pool.ntp.org";
+  const long gmtOffsetSec = -3 * 3600;
+  const int daylightOffsetSec = 0;
+
+  Serial.printf("Connecting to %s ", ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println(" connected");
+
+  struct tm timeinfo;
+
+  configTime(gmtOffsetSec, daylightOffsetSec, "pool.ntp.org", "time.nist.gov");
+
+  if (!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+  }
+
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
 }
