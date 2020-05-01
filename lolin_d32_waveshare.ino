@@ -32,6 +32,8 @@ void setup() {
 
   if (wakeUpCounter ==  0) {
     initAndGetTime();
+    cleanDisplay();
+    delay(500);
   }
 
   helloWorld();
@@ -44,6 +46,17 @@ void setup() {
 }
 
 void loop() {}
+
+void cleanDisplay()
+{
+  display.setFullWindow();
+  display.firstPage();
+  do
+  {
+    display.fillScreen(GxEPD_BLACK);
+  }
+  while (display.nextPage());
+}
 
 void helloWorld() {
   display.setPartialWindow(0, 0, display.width(), display.height());
